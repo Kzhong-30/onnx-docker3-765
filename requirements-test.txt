@@ -1,0 +1,16 @@
+# 测试依赖
+pytest>=7.0.0
+pytest-html>=3.2.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+httpx>=0.24.0
+
+# 项目依赖 (从requirements.txt复制)
+fastapi==0.118.2
+uvicorn[standard]
+python-multipart
+numpy<2.0
+onnxruntime
+Pillow
+torch
+torchvision

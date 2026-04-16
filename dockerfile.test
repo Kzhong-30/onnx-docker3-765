@@ -1,0 +1,24 @@
+# 测试专用Docker镜像
+
+FROM python:3.9
+
+WORKDIR /code
+
+# 安装测试依赖
+COPY ./requirements-test.txt /code/requirements-test.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements-test.txt
+
+# 复制测试文件和模型
+COPY ./tests /code/tests
+COPY ./pytest.ini /code/pytest.ini
+COPY ./run_tests.py /code/run_tests.py
+COPY ./my_model_quantized.onnx /code/my_model_quantized.onnx
+
+# 复制验证数据
+COPY ./hymenoptera_data/val /code/hymenoptera_data/val
+
+# 创建报告目录
+RUN mkdir -p /code/test_reports
+
+# 默认命令运行所有测试
+CMD ["python", "run_tests.py"]
