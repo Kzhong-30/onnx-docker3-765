@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # 主应用服务
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: onnx_image_classification_api
+    ports:
+      - "80:80"
+    volumes:
+      - ./hymenoptera_data/val:/code/hymenoptera_data/val:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # 测试服务
+  test:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    container_name: onnx_model_tests
+    volumes:
+      - ./tests:/code/tests:ro
+      - ./pytest.ini:/code/pytest.ini:ro
+      - ./run_tests.py:/code/run_tests.py:ro
+      - ./test_reports:/code/test_reports
+      - ./hymenoptera_data/val:/code/hymenoptera_data/val:ro
+      - ./my_model_quantized.onnx:/code/my_model_quantized.onnx:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/code
+    command: python run_tests.py
+    profiles:
+      - test
+
+  # 模型加载测试服务
+  test-loading:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    container_name: onnx_model_loading_tests
+    volumes:
+      - ./tests:/code/tests:ro
+      - ./pytest.ini:/code/pytest.ini:ro
+      - ./test_reports:/code/test_reports
+      - ./hymenoptera_data/val:/code/hymenoptera_data/val:ro
+      - ./my_model_quantized.onnx:/code/my_model_quantized.onnx:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/code
+    command: python -m pytest tests/test_model_loading.py -v --html=/code/test_reports/test_report_loading.html --self-contained-html
+    profiles:
+      - test-loading
+
+  # 推理延迟测试服务
+  test-latency:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    container_name: onnx_model_latency_tests
+    volumes:
+      - ./tests:/code/tests:ro
+      - ./pytest.ini:/code/pytest.ini:ro
+      - ./test_reports:/code/test_reports
+      - ./hymenoptera_data/val:/code/hymenoptera_data/val:ro
+      - ./my_model_quantized.onnx:/code/my_model_quantized.onnx:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/code
+    command: python -m pytest tests/test_inference_latency.py -v --html=/code/test_reports/test_report_latency.html --self-contained-html
+    profiles:
+      - test-latency
+
+  # 准确率测试服务
+  test-accuracy:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    container_name: onnx_model_accuracy_tests
+    volumes:
+      - ./tests:/code/tests:ro
+      - ./pytest.ini:/code/pytest.ini:ro
+      - ./test_reports:/code/test_reports
+      - ./hymenoptera_data/val:/code/hymenoptera_data/val:ro
+      - ./my_model_quantized.onnx:/code/my_model_quantized.onnx:ro
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/code
+    command: python -m pytest tests/test_accuracy.py -v --html=/code/test_reports/test_report_accuracy.html --self-contained-html
+    profiles:
+      - test-accuracy
