@@ -51,3 +51,7 @@ ENV/
 # Keep the zip file but ignore the extracted folder
 hymenoptera_data/
 
+# Test results
+test_results/
+.pytest_cache/
+
