@@ -6,3 +6,6 @@ onnxruntime
 Pillow
 torch
 torchvision
+pytest>=7.0
+pytest-html>=3.0
+httpx>=0.24.0

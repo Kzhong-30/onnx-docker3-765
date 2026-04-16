@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - '8000:80'
+    container_name: onnx-classification-api
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80/']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    volumes:
+      - ./test_results:/code/test_results
+    container_name: onnx-classification-tests
+    command: ['python', 'run_tests.py']
+    environment:
+      - PYTHONUNBUFFERED=1
+    network_mode: 'host'

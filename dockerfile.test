@@ -1,0 +1,16 @@
+FROM python:3.9
+
+WORKDIR /code
+
+COPY ./requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./onnx_app.py /code/onnx_app.py
+COPY ./my_model_quantized.onnx /code/my_model_quantized.onnx
+COPY ./hymenoptera_data/val /code/hymenoptera_data/val
+
+COPY ./tests /code/tests
+COPY ./pytest.ini /code/pytest.ini
+COPY ./run_tests.py /code/run_tests.py
+
+CMD ["python", "run_tests.py"]
