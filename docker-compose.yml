@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - '80:80'
+    volumes:
+      - ./hymenoptera_data:/code/hymenoptera_data
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  test:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    volumes:
+      - ./test_reports:/code/test_reports
+      - ./tests:/code/tests
+    environment:
+      - MODELS_DIR=/code
+      - VALIDATION_DATA_DIR=/code/hymenoptera_data/train
+      - API_URL=http://app:80
+    command: >
+      sh -c "mkdir -p /code/test_reports &&
+             pytest tests/ -v 
+             --html=/code/test_reports/test_report.html 
+             --self-contained-html 
+             --junitxml=/code/test_reports/junit_report.xml 
+             --tb=short 
+             --durations=10"
+
+  test-with-api:
+    build:
+      context: .
+      dockerfile: dockerfile.test
+    volumes:
+      - ./test_reports:/code/test_reports
+      - ./tests:/code/tests
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      - MODELS_DIR=/code
+      - VALIDATION_DATA_DIR=/code/hymenoptera_data/train
+      - API_URL=http://app:80
+    command: >
+      sh -c "mkdir -p /code/test_reports &&
+             pytest tests/ -v 
+             --html=/code/test_reports/test_report.html 
+             --self-contained-html 
+             --junitxml=/code/test_reports/junit_report.xml 
+             --tb=short 
+             --durations=10"
+
+  dev:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - '8080:80'
+    volumes:
+      - ./onnx_app.py:/code/onnx_app.py
+      - ./main.py:/code/main.py
+      - ./hymenoptera_data:/code/hymenoptera_data
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ['uvicorn', 'onnx_app:app', '--host', '0.0.0.0', '--port', '80', '--reload']

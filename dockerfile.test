@@ -1,0 +1,24 @@
+FROM python:3.9
+
+WORKDIR /code
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+COPY ./requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
+
+COPY ./onnx_app.py /code/onnx_app.py
+COPY ./main.py /code/main.py
+COPY ./my_model_quantized.onnx /code/my_model_quantized.onnx
+COPY ./my_model.onnx /code/my_model.onnx
+COPY ./hymenoptera_data/train /code/hymenoptera_data/train
+COPY ./tests /code/tests
+COPY ./pytest.ini /code/pytest.ini
+COPY ./run_tests.sh /code/run_tests.sh
+
+RUN chmod +x /code/run_tests.sh && mkdir -p /code/test_reports
+
+ENV MODELS_DIR=/code
+ENV VALIDATION_DATA_DIR=/code/hymenoptera_data/train
+
+CMD ["pytest", "tests/", "-v", "--html=/code/test_reports/test_report.html", "--self-contained-html"]
